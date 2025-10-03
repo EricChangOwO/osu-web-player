@@ -1,0 +1,4 @@
+node_modules/
+songs.db
+*.log
+.DS_Store

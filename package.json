@@ -1,0 +1,16 @@
+{
+  "name": "osu-music-player",
+  "version": "1.0.0",
+  "description": "A web music player for osu! beatmap collections",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "scan": "node src/scanner.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "better-sqlite3": "^9.2.2",
+    "music-metadata": "^8.1.4",
+    "cors": "^2.8.5"
+  }
+}

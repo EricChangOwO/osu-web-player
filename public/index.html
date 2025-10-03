@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>osu! Music Player</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #2c2f33 0%, #2c2f33 100%);
+      color: #fff;
+      min-height: 150vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .stats {
+      display: flex;
+      white-space: nowrap;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 20px;
+      font-size: 0.9em;
+      opacity: 0.9;
+    }
+
+    .search-bar {
+      margin-bottom: 20px;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 15px 20px;
+      border: none;
+      border-radius: 25px;
+      font-size: 1em;
+      outline: none;
+    }
+
+    .song-list {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+      max-height: 800px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+    }
+
+    .song-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .song-item:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateX(5px);
+    }
+
+    .song-item.active {
+      background: rgba(255, 255, 255, 0.3);
+      border-left: 4px solid #fff;
+    }
+
+    .song-info {
+      flex: 1;
+    }
+
+    .song-title {
+      font-weight: bold;
+      font-size: 1.1em;
+      margin-bottom: 5px;
+    }
+
+    .song-artist {
+      opacity: 0.8;
+      font-size: 0.9em;
+    }
+
+    .song-duration {
+      opacity: 0.7;
+      font-size: 0.9em;
+    }
+
+    .player {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 20px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 20px;
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      box-sizing: border-box;  /* 👈 確保 padding 不會撐大 */
+      width: auto;             /* 👈 不手動設 100%，改用 left/right 控制寬度 */
+      margin: 0 20px;          /* 👈 讓左右有一點距離 */
+    }
+
+    .now-playing {
+      margin-bottom: 15px;
+      text-align: center;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .now-playing-title,
+    .now-playing-artist {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+    } 
+
+    .top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .controls {
+      display: flex;
+      flex-shrink: 0;   /* 不被擠壓 */
+      gap: 10px;
+      margin-bottom: 0; /* 留白移掉避免不必要間距 */
+    }
+
+    button {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 1em;
+      transition: all 0.3s;
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    audio {
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 50px;
+      font-size: 1.2em;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 50px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h4>🎵 osu! Music Player</h4>
+      <div class="stats" id="stats">
+        <span>載入中...</span>
+      </div>
+    </header>
+
+    <div class="search-bar">
+      <input type="text" id="search" placeholder="搜尋歌曲、藝術家或譜面...">
+    </div>
+
+    <div class="song-list" id="songList">
+      <div class="loading">載入歌曲中...</div>
+    </div>
+
+    <div class="pagination" id="pagination"></div>
+
+    <div class="player">
+      <div class="top-row">
+        <div class="now-playing" id="nowPlaying">
+          <div class="now-playing-title">尚未播放</div>
+          <div class="now-playing-artist"></div>
+        </div>
+        <div class="controls">
+          <button id="prevBtn" disabled>⏮</button>
+          <button id="playBtn" disabled>▶</button>
+          <button id="nextBtn" disabled>⏭</button>
+        </div>
+      </div>
+      <audio id="audio" controls></audio>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
